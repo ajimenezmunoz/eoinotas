@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C&aacute;lculo Notas Evaluaci&oacute;n Continua</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #f4f1eb;
+    --surface:  #ffffff;
+    --surface2: #f9f7f3;
+    --border:   #ddd9d0;
+    --border2:  #c8c3b8;
+    --accent:   #7a5c2e;
+    --accent2:  #a07840;
+    --text:     #2a2620;
+    --muted:    #9a9088;
+    --green:    #2e7d45;
+    --red:      #b03a2a;
+    --orange:   #b85f1a;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 26px;
+    min-height: 100vh;
+    padding: 2.5rem 1rem 5rem;
+    background-image: radial-gradient(ellipse 70% 40% at 50% -5%, rgba(122,92,46,0.07) 0%, transparent 65%);
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 3rem;
+    animation: fadeDown 0.55s ease both;
+  }
+
+  header .label {
+    font-size: 0.9rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 0.55rem;
+  }
+
+  header h1 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(2.4rem, 5vw, 3.6rem);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    color: var(--text);
+  }
+
+  header h1 em { font-style: italic; color: var(--accent); }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.4rem;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  @media (max-width: 660px) { .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .card:nth-child(1) { animation-delay: 0.06s; }
+  .card:nth-child(2) { animation-delay: 0.12s; }
+  .card:nth-child(3) { animation-delay: 0.18s; }
+  .card:nth-child(4) { animation-delay: 0.24s; }
+  .card:nth-child(5) { animation-delay: 0.30s; }
+  .card:nth-child(6) { animation-delay: 0.36s; }
+  .card:nth-child(7) { animation-delay: 0.42s; }
+  .card:nth-child(8) { animation-delay: 0.48s; }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--accent2), transparent);
+    opacity: 0.5;
+  }
+
+  .card-tag {
+    font-size: 0.82rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 0.35rem;
+    opacity: 0.85;
+  }
+
+  .card h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: 1.8rem;
+    color: var(--text);
+    margin-bottom: 1.8rem;
+    line-height: 1.2;
+  }
+
+  /* ── STEPPER ── */
+  .field { margin-bottom: 1.1rem; }
+
+  .field label {
+    display: block;
+    font-size: 0.95rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--muted);
+	margin-bottom: 0.45rem;
+  }
+
+  .stepper {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid var(--border2);
+    border-radius: 5px;
+	width: 220px;
+    overflow: hidden;
+    background: var(--surface2);
+  }
+
+  .stepper button {
+    background: var(--surface2);
+    border: none;
+    color: var(--accent);
+    font-size: 1.3rem;
+    font-family: 'DM Mono', monospace;
+    width: 42px;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    line-height: 1;
+  }
+
+  .stepper button:hover  { background: #ede9e0; }
+  .stepper button:active { background: #e2ddd4; }
+  .stepper button:first-child { border-right: 1px solid var(--border); }
+  .stepper button:last-child  { border-left:  1px solid var(--border); }
+
+  .stepper input[type="number"] {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 1.2rem;
+    font-weight: 500;
+    text-align: center;
+    outline: none;
+    padding: 0.2rem 0.3rem;
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
+  .stepper input[type="number"]::-webkit-inner-spin-button,
+  .stepper input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+  /* ── RESULT BOX ── */
+  .result-box {
+    margin-top: 1.6rem;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 5px;
+    padding: 1.1rem 1.3rem;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    min-height: 68px;
+    transition: border-color 0.3s, background 0.3s;
+  }
+
+  .result-box.good { border-color: rgba(46,125,69,0.4);  background: rgba(46,125,69,0.04); }
+  .result-box.mid  { border-color: rgba(184,95,26,0.4);  background: rgba(184,95,26,0.04); }
+  .result-box.bad  { border-color: rgba(176,58,42,0.4);  background: rgba(176,58,42,0.04); }
+
+  .result-label {
+    font-size: 0.85rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    align-self: center;
+    flex: 1;
+    min-width: 80px;
+  }
+
+  .result-value {
+    font-family: 'Fraunces', serif;
+    font-size: 2.8rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    transition: color 0.3s;
+    color: var(--muted);
+  }
+
+  .result-value.good { color: var(--green); }
+  .result-value.mid  { color: var(--orange); }
+  .result-value.bad  { color: var(--red); }
+
+  .result-suffix {
+    font-size: 1rem;
+    color: var(--muted);
+    align-self: flex-end;
+    padding-bottom: 0.38rem;
+  }
+
+  /* ── WIDE CARDS ── */
+  .card-wide { grid-column: 1 / -1; }
+
+  .two-cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.4rem;
+  }
+
+  @media (max-width: 520px) { .two-cols { grid-template-columns: 1fr; } }
+
+  .sub-label {
+    font-size: 0.95rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 0.9rem;
+    opacity: 0.85;
+  }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin: 1.5rem 0;
+    color: var(--muted);
+    font-size: 0.62rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .divider::before, .divider::after {
+    content: ''; flex: 1;
+    height: 1px; background: var(--border);
+  }
+
+  /* ── MINI RESULTS ── */
+  .media-results {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.3fr;
+    gap: 1rem;
+  }
+
+  @media (max-width: 520px) { .media-results { grid-template-columns: 1fr; } }
+
+  .mini-result {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 5px;
+    padding: 0.9rem 1rem;
+    text-align: center;
+    transition: border-color 0.3s, background 0.3s;
+  }
+
+  .mini-result.good { border-color: rgba(46,125,69,0.4);  background: rgba(46,125,69,0.04); }
+  .mini-result.mid  { border-color: rgba(184,95,26,0.4);  background: rgba(184,95,26,0.04); }
+  .mini-result.bad  { border-color: rgba(176,58,42,0.4);  background: rgba(176,58,42,0.04); }
+  .mini-result.highlight { background: rgba(122,92,46,0.05); border-color: rgba(122,92,46,0.25); }
+
+  .mini-label {
+    font-size: 0.8rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.35rem;
+  }
+
+  .mini-value {
+    font-family: 'Fraunces', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--muted);
+    transition: color 0.3s;
+    line-height: 1;
+  }
+
+  .mini-value.good   { color: var(--green); }
+  .mini-value.mid    { color: var(--orange); }
+  .mini-value.bad    { color: var(--red); }
+  .mini-value.accent { color: var(--accent); }
+
+  /* ── PESO SLIDER ── */
+  .peso-wrap { margin-bottom: 1.5rem; }
+
+  .peso-wrap > label {
+    display: block;
+    font-size: 0.68rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.7rem;
+  }
+
+  .peso-row {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+  }
+
+  .peso-tag {
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 500;
+    min-width: 62px;
+    white-space: nowrap;
+  }
+
+  .peso-tag.a { color: var(--accent);  text-align: right; }
+  .peso-tag.b { color: var(--accent2); text-align: left; }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    flex: 1;
+    height: 7px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--accent) var(--pct,50%), #ddd9d0 var(--pct,50%));
+    outline: none;
+    cursor: pointer;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2.5px solid var(--accent);
+    box-shadow: 0 1px 6px rgba(0,0,0,0.16);
+    cursor: grab;
+    transition: transform 0.1s;
+  }
+
+  input[type="range"]::-webkit-slider-thumb:active { cursor: grabbing; transform: scale(1.18); }
+  input[type="range"]::-moz-range-thumb {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2.5px solid var(--accent);
+    box-shadow: 0 1px 6px rgba(0,0,0,0.16);
+    cursor: grab;
+  }
+
+  .peso-pcts {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.35rem;
+    font-size: 0.78rem;
+  }
+
+  .peso-pcts .pa { color: var(--accent);  font-weight: 500; }
+  .peso-pcts .pb { color: var(--accent2); font-weight: 500; }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .pop-anim {
+    animation: popIn 0.22s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+
+  @keyframes popIn {
+    from { transform: scale(0.88); opacity: 0.5; }
+    to   { transform: scale(1);    opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <p class="label">Escuela Oficial de Idiomas</p>
+  <h1>C&aacute;lculo <em>Notas Evaluaci&oacute;n Continua</em></h1>
+</header>
+
+<div class="grid">
+
+  <!-- ── (Co)Producción escrita ── -->
+  <div class="card">
+    <p class="card-tag">Prueba independiente</p>
+    <h2 align="center">(Co)Producción <em style="font-style:italic;color:var(--accent)">escrita</em>: Interacci&oacute;n o Desarrollo</h2>
+
+    <div class="field" align="center">
+      <label>Puntos estudiante</label>
+      <div class="stepper">
+        <button onclick="step('ape',-1,'tpe')">−</button>
+        <input type="number" id="ape" min="0" value="20">
+        <button onclick="step('ape',+1,'tpe')">+</button>
+      </div>
+    </div>
+    <div class="field" align="center">
+      <label>M&aacute;ximo de Puntos</label>
+      <div class="stepper">
+        <button onclick="step('tpe',-1)">−</button>
+        <input type="number" id="tpe" min="1" value="40">
+        <button onclick="step('tpe',+1)">+</button>
+      </div>
+    </div>
+
+    <div class="result-box" id="rbpe">
+      <span class="result-label">Nota final</span>
+      <span class="result-value" id="rvpe">—</span>
+      <span class="result-suffix" id="rspe"></span>
+    </div>
+  </div>
+
+  <!-- ── (Co)Producción oral ── -->
+  <div class="card">
+    <p class="card-tag">Prueba independiente</p>
+    <h2 align="center">(Co)Producción <em style="font-style:italic;color:var(--accent)">oral</em>: Interacci&oacute;n o Desarrollo</h2>
+
+    <div class="field" align="center">
+      <label>Puntos estudiante</label>
+      <div class="stepper">
+        <button onclick="step('apo',-1,'tpo')">−</button>
+        <input type="number" id="apo" min="0" value="15">
+        <button onclick="step('apo',+1,'tpo')">+</button>
+      </div>
+    </div>
+    <div class="field" align="center">
+      <label>M&aacute;ximo de Puntos</label>
+      <div class="stepper">
+        <button onclick="step('tpo',-1)">−</button>
+        <input type="number" id="tpo" min="1" value="25">
+        <button onclick="step('tpo',+1)">+</button>
+      </div>
+    </div>
+
+    <div class="result-box" id="rbpo">
+      <span class="result-label">Nota final</span>
+      <span class="result-value" id="rvpo">—</span>
+      <span class="result-suffix" id="rspo"></span>
+    </div>
+  </div>
+
+  <!-- ── Mediación ── -->
+  <div class="card">
+    <p class="card-tag">Prueba independiente</p>
+    <h2 align="center">Mediación</h2>
+
+    <div class="field" align="center">
+      <label>Puntos estudiante</label>
+      <div class="stepper">
+        <button onclick="step('amed',-1,'tmed')">−</button>
+        <input type="number" id="amed" min="0" value="15">
+        <button onclick="step('amed',+1,'tmed')">+</button>
+      </div>
+    </div>
+    <div class="field" align="center">
+      <label>M&aacute;ximo de Puntos</label>
+      <div class="stepper">
+        <button onclick="step('tmed',-1)">−</button>
+        <input type="number" id="tmed" min="1" value="25">
+        <button onclick="step('tmed',+1)">+</button>
+      </div>
+    </div>
+
+    <div class="result-box" id="rbmed">
+      <span class="result-label">Nota final</span>
+      <span class="result-value" id="rvmed">—</span>
+      <span class="result-suffix" id="rsmed"></span>
+    </div>
+  </div>
+  <!-- spacer so Mediación doesn't stretch full width when it's alone in its row -->
+  <div style="display:contents"></div>
+
+  <!-- ── MÓDULO 01 ── -->
+  <div class="card">
+    <p class="card-tag">Prueba independiente</p>
+    <h2 align="center">Comprensión oral o escrita</h2>
+
+    <div class="field" align="center">
+      <label>Puntos estudiante</label>
+      <div class="stepper">
+        <button onclick="step('a1',-1,'t1')">−</button>
+        <input type="number" id="a1" min="0" value="5">
+        <button onclick="step('a1',+1,'t1')">+</button>
+      </div>
+    </div>
+    <div class="field" align="center">
+      <label>M&aacute;ximo de Puntos</label>
+      <div class="stepper">
+        <button onclick="step('t1',-1)">−</button>
+        <input type="number" id="t1" min="1" value="10">
+        <button onclick="step('t1',+1)">+</button>
+      </div>
+    </div>
+
+    <div class="result-box" id="rb1">
+      <span class="result-label">Nota final</span>
+      <span class="result-value" id="rv1">—</span>
+      <span class="result-suffix" id="rs1"></span>
+    </div>
+  </div>
+    <!-- ── MÓDULO 04: PONDERADA ── -->
+  <div class="card card-wide">
+    <p class="card-tag">Pruebas relacionadas</p>
+    <h2 align="center">Dos pruebas o ejercicios con<br>nota media (50%) o ponderada (mover selector)</h2>
+
+    <div class="peso-wrap">
+      <label>Distribución del peso</label>
+      <div class="peso-row">
+        <span class="peso-tag a" id="pa-pct">50 %</span>
+        <input type="range" id="peso" min="0" max="100" step="5" value="50" oninput="updatePeso()">
+        <span class="peso-tag b" id="pb-pct">50 %</span>
+      </div>
+      <div class="peso-pcts">
+        <span class="pa">Prueba/Ejercicio 1</span>
+        <span class="pb">Prueba/Ejercicio 2</span>
+      </div>
+    </div>
+
+    <div class="two-cols">
+      <div>
+        <p class="sub-label">Prueba/Ejercicio 1</p>
+        <div class="field" align="center">
+          <label>Puntos estudiante</label>
+          <div class="stepper">
+            <button onclick="step('a4a',-1,'t4a')">−</button>
+            <input type="number" id="a4a" min="0" value="5">
+            <button onclick="step('a4a',+1,'t4a')">+</button>
+          </div>
+        </div>
+        <div class="field" align="center">
+          <label>M&aacute;ximo de Puntos</label>
+          <div class="stepper">
+            <button onclick="step('t4a',-1)">−</button>
+            <input type="number" id="t4a" min="1" value="10">
+            <button onclick="step('t4a',+1)">+</button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <p class="sub-label">Prueba/Ejercicio 2</p>
+        <div class="field" align="center">
+          <label>Puntos estudiante</label>
+          <div class="stepper">
+            <button onclick="step('a4b',-1,'t4b')">−</button>
+            <input type="number" id="a4b" min="0" value="5">
+            <button onclick="step('a4b',+1,'t4b')">+</button>
+          </div>
+        </div>
+        <div class="field" align="center">
+          <label>M&aacute;ximo de Puntos</label>
+          <div class="stepper">
+            <button onclick="step('t4b',-1)">−</button>
+            <input type="number" id="t4b" min="1" value="10">
+            <button onclick="step('t4b',+1)">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider">resultados</div>
+
+    <div class="media-results">
+      <div class="mini-result" id="mr4a">
+        <p class="mini-label">Prueba/Ejercicio 1</p>
+        <p class="mini-value" id="mv4a">—</p>
+      </div>
+      <div class="mini-result" id="mr4b">
+        <p class="mini-label">Prueba/Ejercicio 2</p>
+        <p class="mini-value" id="mv4b">—</p>
+      </div>
+      <div class="mini-result highlight" id="mr4p">
+        <p class="mini-label">Nota media o ponderada</p>
+        <p class="mini-value accent" id="mv4p">—</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+<br>
+<div align="center"><a download='Calculadora_notas_EOI.html' href='/'><button style="font-size : 18px; width: 40%; height: 160px; font-family : 'Fraunces', serif;">Descarga esta p&aacute;gina<br>para usarla sin internet</button></a><br></div>
+
+
+<script>
+  /* ── Helpers ── */
+  function calcNota(aciertos, total) {
+    if (isNaN(total) || total < 1) return null;
+    if (isNaN(aciertos) || aciertos < 0) return null;
+    return Math.round(Math.min((aciertos / total) * 10, 10) * 10) / 10;
+  }
+
+  function colorClass(n) {
+    if (n === null) return '';
+    if (n >= 5) return 'good';
+    return 'bad';
+  }
+
+  function setResult(boxId, valueId, suffixId, nota) {
+    const box = document.getElementById(boxId);
+    const val = document.getElementById(valueId);
+    const suf = suffixId ? document.getElementById(suffixId) : null;
+    box.className = 'result-box';
+    val.className = 'result-value';
+    if (nota === null) { val.textContent = '—'; if (suf) suf.textContent = ''; return; }
+    const cls = colorClass(nota);
+    box.classList.add(cls); val.classList.add(cls);
+    val.textContent = nota.toFixed(1);
+    if (suf) suf.textContent = '/ 10';
+    val.classList.add('pop-anim');
+    val.addEventListener('animationend', () => val.classList.remove('pop-anim'), { once: true });
+  }
+
+  function setMini(rId, vId, nota, isAccent) {
+    const res = document.getElementById(rId);
+    const val = document.getElementById(vId);
+    res.className = isAccent ? 'mini-result highlight' : 'mini-result';
+    val.className = 'mini-value';
+    if (nota === null) { if (isAccent) val.classList.add('accent'); val.textContent = '—'; return; }
+    res.classList.add(colorClass(nota));
+    val.classList.add(colorClass(nota));
+    val.textContent = nota.toFixed(1);
+  }
+
+  /* ── Stepper: clamp aciertos ≤ total ── */
+  function step(inputId, delta, maxInputId) {
+    const inp = document.getElementById(inputId);
+    let v = (parseFloat(inp.value) || 0) + delta;
+    v = Math.max(v, parseFloat(inp.min) || 0);
+    if (maxInputId) {
+      const mx = parseFloat(document.getElementById(maxInputId).value);
+      if (!isNaN(mx)) v = Math.min(v, mx);
+    }
+    inp.value = v;
+    inp.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  /* ── Funciones de cálculo por módulo ── */
+  function updatePE() {
+    setResult('rbpe','rvpe','rspe',
+      calcNota(+document.getElementById('ape').value, +document.getElementById('tpe').value));
+  }
+  function updatePO() {
+    setResult('rbpo','rvpo','rspo',
+      calcNota(+document.getElementById('apo').value, +document.getElementById('tpo').value));
+  }
+  function updateMed() {
+    setResult('rbmed','rvmed','rsmed',
+      calcNota(+document.getElementById('amed').value, +document.getElementById('tmed').value));
+  }
+  function update1() {
+    setResult('rb1','rv1','rs1',
+      calcNota(+document.getElementById('a1').value, +document.getElementById('t1').value));
+  }
+  function update2() {
+    const el = document.getElementById('a2');
+    if (!el) return;
+    setResult('rb2','rv2','rs2',
+      calcNota(+el.value, +document.getElementById('t2').value));
+  }
+  function update3() {
+    const a3a = document.getElementById('a3a');
+    if (!a3a) return;
+    const nA = calcNota(+a3a.value, +document.getElementById('t3a').value);
+    const nB = calcNota(+document.getElementById('a3b').value, +document.getElementById('t3b').value);
+    const med = (nA !== null && nB !== null) ? Math.round((nA + nB) / 2 * 10) / 10 : null;
+    setMini('mr3a','mv3a', nA,  false);
+    setMini('mr3b','mv3b', nB,  false);
+    setMini('mr3m','mv3m', med, true);
+  }
+  function update4() {
+    const nA  = calcNota(+document.getElementById('a4a').value, +document.getElementById('t4a').value);
+    const nB  = calcNota(+document.getElementById('a4b').value, +document.getElementById('t4b').value);
+    const raw = parseInt(document.getElementById('peso').value);
+    const p   = (isNaN(raw) ? 50 : raw) / 100;
+    const pond = (nA !== null && nB !== null)
+      ? Math.round((nA * p + nB * (1 - p)) * 10) / 10 : null;
+    setMini('mr4a','mv4a', nA,   false);
+    setMini('mr4b','mv4b', nB,   false);
+    setMini('mr4p','mv4p', pond, true);
+  }
+  function updatePeso() {
+    const slider = document.getElementById('peso');
+    const raw = parseInt(slider.value);
+    const p = Math.round(raw / 5) * 5;
+    slider.value = p;
+    document.getElementById('pa-pct').textContent = p + ' %';
+    document.getElementById('pb-pct').textContent = (100 - p) + ' %';
+    slider.style.setProperty('--pct', p + '%');
+    update4();
+  }
+
+  /* ── Listeners (seguros ante elementos ausentes) ── */
+  function safeOn(id, fn) {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', fn);
+  }
+  ['ape','tpe'].forEach(id => safeOn(id, updatePE));
+  ['apo','tpo'].forEach(id => safeOn(id, updatePO));
+  ['amed','tmed'].forEach(id => safeOn(id, updateMed));
+  ['a1','t1'].forEach(id => safeOn(id, update1));
+  ['a2','t2'].forEach(id => safeOn(id, update2));
+  ['a3a','t3a','a3b','t3b'].forEach(id => safeOn(id, update3));
+  ['a4a','t4a','a4b','t4b'].forEach(id => safeOn(id, update4));
+
+  /* ── Init ── */
+  updatePeso();
+  updatePE(); updatePO(); updateMed();
+  update1(); update2(); update3(); update4();
+</script>
+</body>
+</html>
