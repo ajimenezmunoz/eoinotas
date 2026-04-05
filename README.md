@@ -4,4 +4,6 @@ Se basa en las rúbricas de Asturias, pero puede modificarse el puntaje según s
 
 Las producciones asumen que se esta valorando un único modo: desarrollo o interacción, y no ambos conjuntamente.
 
+Versión en vivo en https://eoinotas.netlify.app
+
 Comentarios y errores a antoniojjm@educastur.org
