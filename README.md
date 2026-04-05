@@ -1,4 +1,4 @@
-Calculadora de notas para EOI.
+Calculadora de notas de evaluación continua para EOI.
 
 Se basa en las rúbricas de Asturias, pero puede modificarse el puntaje según se requiera.
 
